@@ -56,13 +56,14 @@ class LoadWithCache:
         return temp
 
 
-class CUBDataset(Dataset[LBBImage]):
+class BirdsDataset(Dataset[LBBImage]):
     def __init__(self, root: str, train: bool, transform: Callable[[Tensor], Tensor], device: Optional[str] = None,
                  load_function: Callable[[str], Tensor] = LoadWithCache()):
         self._data_info = get_data_info(Path(root), train)
         self._length = len(self._data_info["id"])
-        self._read_image: Callable[[Path], Tensor] = lambda x: transform(load_function(x))
+        self._read_image: Callable[[str], Tensor] = lambda x: transform(load_function(x))
+        self._device = device
 
     def __len__(self) -> int: return self._length
 
-    def __getitem__(self, index: int) -> Tensor: return get_data(index, self._read_image, self._data_info, self._device)
+    def __getitem__(self, index: int) -> LBBImage: return get_data(index, self._read_image, self._data_info, self._device)
