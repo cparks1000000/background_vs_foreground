@@ -71,3 +71,18 @@ def shuffle(xs: Tensor, x_boxes: List[BoundingBox]) -> Tensor:
     ys = rotate(xs)
     y_boxes = x_boxes[1:] + x_boxes[0:1]
     return torch.stack([crop_and_paste(x, x_box, y, y_box) for (x, x_box, y, y_box) in zip(xs, x_boxes, ys, y_boxes)])
+
+
+
+if __name__ == "__main__":
+    img_path r''
+    bbox_cords = []
+    bbox = torch.tensor([*bbox_cords])
+    tensor = torchvision.ToTensor()(torchvision.io.read_image(img_path))
+    tensor = resize(tensor)
+    crop = crop(tensor, cords)
+    crop = resize(crop)
+    torchshow.show(crop)
+
+
+
