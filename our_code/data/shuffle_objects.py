@@ -64,7 +64,10 @@ def crop_and_paste(foreground_image: Tensor, foreground_box: BoundingBox,
     return paste(foreground_image, background_crop, paste_box)
 
 
+def rotate(x: Tensor, distance: int = 1) -> Tensor: return torch.cat([x[distance:], x[0:distance]])
+
+
 def shuffle(xs: Tensor, x_boxes: List[BoundingBox]) -> Tensor:
-    ys = torch.cat([xs[1:], xs[0:1]])
+    ys = rotate(xs)
     y_boxes = x_boxes[1:] + x_boxes[0:1]
     return torch.stack([crop_and_paste(x, x_box, y, y_box) for (x, x_box, y, y_box) in zip(xs, x_boxes, ys, y_boxes)])

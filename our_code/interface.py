@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import NamedTuple, Protocol, Tuple, Sequence
+from typing import NamedTuple, Protocol, Tuple, Sequence, List
 from torch import Tensor
 
 
@@ -12,7 +12,7 @@ class ShuffleBackgrounds(Protocol):
 
 
 # Output of the network's forward pass.
-class FBClassification(NamedTuple):
+class MultiClassification(NamedTuple):
     classification: Tensor
     foreground: Tensor
     background: Tensor
@@ -29,8 +29,18 @@ class BoundingBox(NamedTuple):
 def bounding_box_from_tuple(x: Tuple[int, int, int, int]): return BoundingBox(x[0], x[1], x[2], x[3])
 
 
+# noinspection PyPropertyDefinition
+class ILabeledBoundingBoxImage(Protocol):
+    @property
+    def image(self) -> Tensor: ...
+    @property
+    def label(self) -> Tensor: ...
+    @property
+    def bounding_box(self) -> List[BoundingBox]: ...
+
+
 # output of the dataset.
-class LBBImage(NamedTuple):
+class LabeledBoundingBoxImage(NamedTuple):
     image: Tensor
     label: Tensor
-    bounding_box: BoundingBox
+    bounding_box: List[BoundingBox]

@@ -1,6 +1,6 @@
 from functools import reduce
 from pathlib import Path
-from typing import Callable, Sequence, NewType, Dict, Optional
+from typing import Callable, Sequence, NewType, Dict, Optional, List, cast
 
 import torch
 from numpy import ndarray
@@ -9,14 +9,14 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from torchvision.io import read_image as readim
 
-from our_code.interface import LBBImage, BoundingBox
+from our_code.interface import LabeledBoundingBoxImage, BoundingBox
 
 #Should include keys "id", "path", "label", x", "y", "width", "height"
 BirdsDataFrame = NewType("BirdsDataFrame", DataFrame)
 
 
 def to_birds_frame(x: DataFrame) -> BirdsDataFrame:
-    assert all(key in x for key in ("id", "paths", "labels", "split", "x", "y", "width", "height"))
+    for key in ("id", "path", "label", "x", "y", "width", "height"): assert key in x, f"{key} is missing."
     return BirdsDataFrame(x)
 
 
@@ -28,7 +28,7 @@ def get_data_info(root: Path | str, train: bool) -> BirdsDataFrame:
     if isinstance(root, str): root = Path(root)
     path = read_csv(root/"images.txt", delim_whitespace=True, names=["id", "path"])
     # noinspection PyTypeChecker
-    path["path"] = str(root) + "/" + path["path"]
+    path["path"] = str(root) + "/images/" + path["path"]
     label = read_csv(root/"image_class_labels.txt", delim_whitespace=True, names=["id", "label"])
     split = read_csv(root/"train_test_split.txt", delim_whitespace=True, names=["id", "split"])
     boxes = read_csv(root/"bounding_boxes.txt", delim_whitespace=True, names=["id", "x", "y", "width", "height"])
@@ -36,12 +36,15 @@ def get_data_info(root: Path | str, train: bool) -> BirdsDataFrame:
     return to_birds_frame(out[out["split"] == (0 if train else 1)])
 
 
-def get_data(i: int, read_image: Callable[[str], Tensor], frame: BirdsDataFrame, device: Optional[str]) -> LBBImage:
+def get_data(i: int, read_image: Callable[[str], Tensor], frame: BirdsDataFrame, device: Optional[str]) -> LabeledBoundingBoxImage:
     row = frame.iloc[i]
-    bounding_box = BoundingBox(h_min=row["y"], h_max=row["y"] + row["height"], w_min=row["x"], w_max=row["x"] + row["width"])
+    bounding_box = BoundingBox(
+        h_min=int(row["y"]), h_max=int(row["y"] + row["height"]),
+        w_min=int(row["x"]), w_max=int(row["x"] + row["width"])
+    )
     image = read_image(row["path"])
     if device is not None: image = image.to(device)
-    return LBBImage(image=image, label=Tensor(row["label"]), bounding_box=bounding_box)
+    return LabeledBoundingBoxImage(image=image, label=Tensor(row["label"]), bounding_box=cast(List[BoundingBox], bounding_box))
 
 
 class LoadWithCache:
@@ -56,7 +59,7 @@ class LoadWithCache:
         return temp
 
 
-class BirdsDataset(Dataset[LBBImage]):
+class BirdsDataset(Dataset[LabeledBoundingBoxImage]):
     def __init__(self, root: str, train: bool, transform: Callable[[Tensor], Tensor], device: Optional[str] = None,
                  load_function: Callable[[str], Tensor] = LoadWithCache()):
         self._data_info = get_data_info(Path(root), train)
@@ -66,4 +69,4 @@ class BirdsDataset(Dataset[LBBImage]):
 
     def __len__(self) -> int: return self._length
 
-    def __getitem__(self, index: int) -> LBBImage: return get_data(index, self._read_image, self._data_info, self._device)
+    def __getitem__(self, index: int) -> LabeledBoundingBoxImage: return get_data(index, self._read_image, self._data_info, self._device)

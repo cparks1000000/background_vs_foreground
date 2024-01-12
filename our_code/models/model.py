@@ -3,7 +3,10 @@ import torchvision
 
 from typing import TypedDict, Optional
 
-from ..interface import FBClassification
+from torch import Tensor
+
+from our_code.modules.base import OneModule
+from ..interface import MultiClassification
 
 
 
@@ -26,7 +29,7 @@ def _get_linear(dim_list, a_list) -> torch.nn.Module:
     return torch.nn.Sequential(*temp_list)
 
 
-class BigClass(torch.nn.Module):
+class BigClass(OneModule[Tensor, MultiClassification]):
     #TODO add checker on class list
     #
     def __init__(self,
@@ -63,10 +66,10 @@ class BigClass(torch.nn.Module):
     def _get_dim(self, image_size: tuple[int, int, int]) -> list[int]:
         return [self.down_sampler(torch.zeros((1, *image_size))).shape[1]]
 
-    def forward(self, inputs: torch.Tensor) -> FBClassification:
+    def forward(self, inputs: torch.Tensor) -> MultiClassification:
         feature = self.down_sampler(inputs)
         final_features = self.splitter(feature)
-        return FBClassifcatioin(*final_features)
+        return MultiClassification(*final_features)
 
 
 class Splitter(torch.nn.Module):
@@ -97,7 +100,6 @@ def main():
                  unknown_dim=True
                  )
     test = torch.zeros(1, 3, 640, 640)
-
 
 
 if __name__ == "__main__": main()
