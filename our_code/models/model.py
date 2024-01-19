@@ -9,7 +9,6 @@ from our_code.modules.base import OneModule
 from ..interface import MultiClassification
 
 
-
 class FCSettings(TypedDict):
     dim_list: list[int]
     activation_list: list[torch.nn.Module]

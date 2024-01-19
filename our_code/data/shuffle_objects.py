@@ -6,6 +6,7 @@ from torch import Tensor
 from torchvision.transforms.v2.functional import resize
 
 from our_code.interface import BoundingBox
+from our_code.scripts.data_test import main
 
 
 def get_height(box: BoundingBox) -> int: return box.h_max - box.h_min
@@ -73,16 +74,10 @@ def shuffle(xs: Tensor, x_boxes: List[BoundingBox]) -> Tensor:
     return torch.stack([crop_and_paste(x, x_box, y, y_box) for (x, x_box, y, y_box) in zip(xs, x_boxes, ys, y_boxes)])
 
 
-
-if __name__ == "__main__":
-    img_path r''
-    bbox_cords = []
-    bbox = torch.tensor([*bbox_cords])
-    tensor = torchvision.ToTensor()(torchvision.io.read_image(img_path))
-    tensor = resize(tensor)
-    crop = crop(tensor, cords)
-    crop = resize(crop)
-    torchshow.show(crop)
+def scale_image(image: Tensor, scale: float):
+    _, h, w = image.shape
+    return resize(image, [int(h*scale), int(w*scale)])
 
 
+if __name__ == "__main__": main()
 
